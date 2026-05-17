@@ -21,7 +21,7 @@ namespace MvcMovie.Controllers
 
         // GET: Movies
         // GET: Movies
-        public async Task<IActionResult> Index(string movieGenre, string searchString)
+        public async Task<IActionResult> Index(string movieGenre, string searchString, string year)
         {
             if (_context.Movie == null)
             {
@@ -32,6 +32,11 @@ namespace MvcMovie.Controllers
             IQueryable<string> genreQuery = from m in _context.Movie
                                             orderby m.Genre
                                             select m.Genre;
+
+            IQueryable<int> yearQuery = from m in _context.Movie
+                                             orderby m.ReleaseDate.Year
+                                             select m.ReleaseDate.Year;
+
             var movies = from m in _context.Movie
                          select m;
 
@@ -45,10 +50,16 @@ namespace MvcMovie.Controllers
                 movies = movies.Where(x => x.Genre == movieGenre);
             }
 
+            if(!string.IsNullOrEmpty(year))
+            {
+                movies = movies.Where(x => x.ReleaseDate.Year.ToString("yyyy") == year);
+            }
+
             var movieGenreVM = new MovieGenreViewModel
             {
                 Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
-                Movies = await movies.ToListAsync()
+                Movies = await movies.ToListAsync(),
+                Years = new SelectList(await yearQuery.Distinct().ToListAsync()),
             };
 
             return View(movieGenreVM);
